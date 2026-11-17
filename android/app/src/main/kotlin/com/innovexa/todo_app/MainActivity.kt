@@ -39,6 +39,13 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                 }
+                "firstInstallTime" -> {
+                    try {
+                        result.success(packageManager.getPackageInfo(packageName, 0).firstInstallTime)
+                    } catch (e: Exception) {
+                        result.success(0L)
+                    }
+                }
                 "updateWidget" -> {
                     TodoWidgetProvider.refreshAll(this)
                     result.success(true)

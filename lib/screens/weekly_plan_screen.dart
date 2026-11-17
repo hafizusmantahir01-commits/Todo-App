@@ -25,9 +25,10 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> {
   void initState() {
     super.initState();
     final n = DateTime.now();
-    // On Saturday or Sunday, plan the coming week; otherwise the current one.
-    final base = n.weekday >= DateTime.saturday ? DateTime(n.year, n.month, n.day + (8 - n.weekday)) : n;
-    _weekStart = DateTime(base.year, base.month, base.day - (base.weekday - 1));
+    // In the last two days of the week, plan the coming week; otherwise the current one.
+    final cur = store.startOfWeek(n);
+    final dayIndex = DateTime(n.year, n.month, n.day).difference(cur).inDays;
+    _weekStart = dayIndex >= 5 ? DateTime(cur.year, cur.month, cur.day + 7) : cur;
     final g = store.goalsFor(_weekStart);
     _goals = List.generate(3, (i) => TextEditingController(text: i < g.length ? g[i] : ''));
   }

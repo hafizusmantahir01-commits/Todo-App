@@ -6,6 +6,7 @@ import 'data/store.dart';
 import 'l10n/strings.dart';
 import 'screens/home_shell.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/native.dart';
 import 'services/notifications.dart';
 import 'services/widget_sync.dart';
 import 'theme/app_theme.dart';
@@ -13,6 +14,7 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppStore.instance.load();
+  AppStore.instance.checkInstall(await Native.firstInstallTime());
   await Notifier.init();
   AppStore.afterChange = _refreshOutside;
   _refreshOutside();

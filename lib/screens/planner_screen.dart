@@ -74,7 +74,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
     });
   }
 
-  DateTime get _weekStart => DateTime(_selected.year, _selected.month, _selected.day - (_selected.weekday - 1));
+  DateTime get _weekStart => store.startOfWeek(_selected);
 
   double _y(DateTime t) {
     final mins = (t.hour - _startHour) * 60 + t.minute;

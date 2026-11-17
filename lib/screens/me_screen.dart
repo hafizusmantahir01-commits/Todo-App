@@ -9,16 +9,19 @@ import '../services/notifications.dart';
 import '../utils/dates.dart';
 import '../theme/app_colors.dart';
 import '../utils/prayer_times.dart';
+import '../widgets/city_picker.dart';
 import '../widgets/common.dart';
 import '../widgets/user_avatar.dart';
 import 'brain_dump_screen.dart';
 import 'help_screen.dart';
 import 'lists_screen.dart';
+import 'onboarding_screen.dart';
 import 'privacy_screen.dart';
 import 'weekly_plan_screen.dart';
+import 'widget_settings_screen.dart';
 import 'profile_setup_screen.dart';
 
-const appVersion = '3.1.0';
+const appVersion = '3.3.2';
 const contactEmail = 'innovexa.technologies01@gmail.com';
 
 /// Profile and settings.
@@ -161,12 +164,7 @@ class MeScreen extends StatelessWidget {
                         title: tr('City'),
                         value: store.city.name,
                         onTap: () async {
-                          final id = await pickOption<String>(
-                            context,
-                            tr('Your city'),
-                            [for (final ct in cities) OptionItem(ct.id, ct.name)],
-                            store.cityId,
-                          );
+                          final id = await showCityPicker(context, current: store.cityId);
                           if (id != null) store.setPrayer(city: id);
                         },
                       ),
@@ -354,27 +352,39 @@ class MeScreen extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
+                    _Row(
+                      icon: Icons.view_week_outlined,
+                      title: tr('Week starts on'),
+                      value: dayName(store.weekStart),
+                      onTap: () async {
+                        final d = await pickOption<int>(context, tr('Week starts on'), [
+                          for (final w in const [DateTime.monday, DateTime.saturday, DateTime.sunday]) OptionItem(w, dayName(w)),
+                        ], store.weekStart);
+                        if (d != null) store.setSettings(weekStartDay: d);
+                      },
+                    ),
                     _Row(icon: Icons.event_note_rounded, title: tr('Plan your week'), value: '', onTap: () => _push(context, const WeeklyPlanScreen())),
                     _Row(icon: Icons.folder_outlined, title: tr('Lists'), value: '${store.lists.length}', onTap: () => _push(context, const ListsScreen())),
                     _Row(icon: Icons.bolt_rounded, title: tr('Brain dump'), value: tr('Many tasks at once'), onTap: () => _push(context, const BrainDumpScreen())),
-                    _Row(icon: Icons.auto_awesome_outlined, title: tr('Smart typing guide'), value: tr('Roman Urdu'), onTap: () => _push(context, const HelpScreen())),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              AppCard(
-                color: c.orangeSoft,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.widgets_outlined, color: c.orangeText),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        tr('Home screen widget: press and hold an empty spot on your home screen, tap Widgets, and add Todo App. It shows your top 3.'),
-                        style: TextStyle(fontSize: 13, color: c.orangeText, height: 1.45, fontWeight: FontWeight.w600),
-                      ),
+                    _Row(
+                      icon: Icons.replay_rounded,
+                      title: tr('Show welcome screens again'),
+                      value: '',
+                      onTap: () {
+                        store.restartIntro();
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                          (_) => false,
+                        );
+                      },
                     ),
+                    _Row(
+                      icon: Icons.widgets_outlined,
+                      title: tr('Home screen widget'),
+                      value: WidgetSettingsScreen.contentLabel(store.widgetContent),
+                      onTap: () => _push(context, const WidgetSettingsScreen()),
+                    ),
+                    _Row(icon: Icons.auto_awesome_outlined, title: tr('Smart typing guide'), value: tr('Roman Urdu'), onTap: () => _push(context, const HelpScreen())),
                   ],
                 ),
               ),

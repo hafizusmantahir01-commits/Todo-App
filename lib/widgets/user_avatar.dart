@@ -5,26 +5,10 @@ import 'package:flutter/material.dart';
 import '../data/store.dart';
 import '../theme/app_colors.dart';
 
-/// Built-in avatars the user can pick instead of a photo.
-const avatarIcons = <IconData>[
-  Icons.face_rounded,
-  Icons.face_2_rounded,
-  Icons.face_3_rounded,
-  Icons.face_4_rounded,
-  Icons.face_5_rounded,
-  Icons.face_6_rounded,
-  Icons.mosque_rounded,
-  Icons.menu_book_rounded,
-  Icons.sports_cricket_rounded,
-  Icons.local_cafe_rounded,
-  Icons.rocket_launch_rounded,
-  Icons.spa_rounded,
-];
-
 /// Background colors for avatars and letters.
-const avatarColors = <int>[0xFFC9A227, 0xFF14213D, 0xFF2563EB, 0xFFE11D48, 0xFF0D9488, 0xFFD97706];
+const avatarColors = <int>[0xFFF6EDCF, 0xFFDCE7FB, 0xFFFCE1E7, 0xFFDDF3EC, 0xFFC9A227, 0xFF14213D, 0xFF2563EB, 0xFF0D9488];
 
-/// The user's picture: photo, built-in avatar, or the first letter of their name.
+/// The user's picture: a photo, or the first letter of their name.
 /// With [showGear], a small settings badge sits on the corner.
 class UserAvatar extends StatelessWidget {
   const UserAvatar({super.key, this.size = 46, this.showGear = false, this.radius});
@@ -39,18 +23,14 @@ class UserAvatar extends StatelessWidget {
     final store = AppStore.instance;
     final r = radius ?? size * 0.32;
     final color = Color(store.avatarColor);
-    final onColor = store.avatarColor == 0xFF14213D ? const Color(0xFFE9C46A) : (store.avatarColor == 0xFFC9A227 ? const Color(0xFF14213D) : Colors.white);
+    final onColor = store.avatarColor == 0xFF14213D
+        ? const Color(0xFFE9C46A)
+        : (color.computeLuminance() > 0.35 ? const Color(0xFF14213D) : Colors.white);
 
     Widget inner;
     final path = store.photoPath;
     if (store.avatarKind == 'photo' && path != null && File(path).existsSync()) {
       inner = Image.file(File(path), width: size, height: size, fit: BoxFit.cover, gaplessPlayback: true);
-    } else if (store.avatarKind == 'avatar') {
-      inner = Container(
-        color: color,
-        alignment: Alignment.center,
-        child: Icon(avatarIcons[store.avatarIndex.clamp(0, avatarIcons.length - 1)], size: size * 0.58, color: onColor),
-      );
     } else {
       final name = store.userName.trim();
       inner = Container(

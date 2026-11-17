@@ -33,7 +33,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: store.userName);
-    _tab = store.avatarKind == 'photo' ? 'photo' : 'avatar';
+    _tab = store.avatarKind == 'photo' ? 'photo' : 'initial';
   }
 
   @override
@@ -153,7 +153,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         decoration: BoxDecoration(color: c.card, borderRadius: BorderRadius.circular(16)),
                         child: Row(
                           children: [
-                            for (final t in const [('avatar', 'Avatar'), ('photo', 'Photo'), ('initial', 'Letter')])
+                            for (final t in const [('initial', 'Letter'), ('photo', 'Photo')])
                               Expanded(
                                 child: Material(
                                   color: _tab == t.$1 ? c.sel : Colors.transparent,
@@ -183,39 +183,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if (_tab == 'avatar') ...[
-                        GridView.count(
-                          crossAxisCount: 6,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          children: [
-                            for (var i = 0; i < avatarIcons.length; i++)
-                              Semantics(
-                                button: true,
-                                selected: store.avatarKind == 'avatar' && store.avatarIndex == i,
-                                label: tr('Avatar {n}', {'n': i + 1}),
-                                child: Material(
-                                  color: store.avatarKind == 'avatar' && store.avatarIndex == i ? c.orange : c.card,
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(16),
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      store.setAvatar(kind: 'avatar', index: i);
-                                    },
-                                    child: Icon(
-                                      avatarIcons[i],
-                                      size: 26,
-                                      color: store.avatarKind == 'avatar' && store.avatarIndex == i ? c.onOrange : c.ink,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
                       if (_tab == 'photo') ...[
                         Row(
                           children: [
@@ -256,7 +223,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 selected: store.avatarColor == col,
                                 child: InkResponse(
                                   radius: 24,
-                                  onTap: () => store.setAvatar(kind: _tab == 'avatar' ? 'avatar' : 'initial', color: col),
+                                  onTap: () => store.setAvatar(kind: 'initial', color: col),
                                   child: Container(
                                     width: 40,
                                     height: 40,

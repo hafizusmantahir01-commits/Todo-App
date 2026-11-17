@@ -5,6 +5,7 @@ import '../l10n/strings.dart';
 import '../services/notifications.dart';
 import '../theme/app_colors.dart';
 import '../utils/prayer_times.dart';
+import '../widgets/city_picker.dart';
 import '../widgets/common.dart';
 import 'home_shell.dart';
 
@@ -111,8 +112,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(14),
                                 onTap: () async {
-                                  final id = await pickOption<String>(
-                                      context, tr('Your city'), [for (final ct in cities) OptionItem(ct.id, ct.name)], _city);
+                                  final id = await showCityPicker(context, current: _city);
                                   if (id != null) setState(() => _city = id);
                                 },
                                 child: Padding(

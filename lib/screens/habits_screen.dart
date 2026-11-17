@@ -137,7 +137,8 @@ class _HabitRow extends StatelessWidget {
     final doneToday = store.habitDone(habit, today);
     final streak = store.habitStreak(habit);
     final count = habit.log[dayKey(today)] ?? 0;
-    final days = [for (var i = 6; i >= 0; i--) DateTime(today.year, today.month, today.day - i)];
+    final days = store.weekOf(today);
+    final todayStart = DateTime(today.year, today.month, today.day);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -182,24 +183,32 @@ class _HabitRow extends StatelessWidget {
                       Row(
                         children: [
                           for (final d in days) ...[
-                            Container(
-                              width: 20,
-                              height: 20,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: store.habitDone(habit, d) ? c.orange : c.raised,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                dayInitial(d.weekday),
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1,
-                                  color: store.habitDone(habit, d) ? c.onOrange : c.muted,
+                            Builder(builder: (context) {
+                              final isToday = sameDay(d, todayStart);
+                              final future = d.isAfter(todayStart);
+                              final ok = store.habitDone(habit, d);
+                              return Container(
+                                width: 22,
+                                height: 22,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: ok ? c.orange : (future ? Colors.transparent : c.raised),
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: isToday
+                                      ? Border.all(color: c.ink, width: 1.5)
+                                      : (future ? Border.all(color: c.line, width: 1.5) : null),
                                 ),
-                              ),
-                            ),
+                                child: Text(
+                                  dayInitial(d.weekday),
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1,
+                                    color: ok ? c.onOrange : (future ? c.muted.withValues(alpha: 0.6) : c.muted),
+                                  ),
+                                ),
+                              );
+                            }),
                             const SizedBox(width: 4),
                           ],
                           if (habit.isCount) ...[

@@ -76,8 +76,10 @@ class _TodayScreenState extends State<TodayScreen> {
         final pt = store.prayersFor(now);
         final ramzan = store.isRamzan;
         final hijri = store.hijriFor(now);
-        final showWeekly = (now.weekday == DateTime.sunday || now.weekday == DateTime.saturday || now.weekday == DateTime.monday) &&
-            store.goalsFor(now.weekday >= DateTime.saturday ? DateTime(now.year, now.month, now.day + (8 - now.weekday)) : now).isEmpty;
+        final weekBegin = store.startOfWeek(now);
+        final dayOfWeek = DateTime(now.year, now.month, now.day).difference(weekBegin).inDays;
+        final planWeek = dayOfWeek >= 5 ? DateTime(weekBegin.year, weekBegin.month, weekBegin.day + 7) : weekBegin;
+        final showWeekly = (dayOfWeek >= 5 || dayOfWeek == 0) && store.goalsFor(planWeek).isEmpty;
         final overdue = store.overdue;
         final today = store.dueToday;
         final anytime = store.anytime;

@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 
@@ -36,6 +37,34 @@ class TodoWidgetProvider : AppWidgetProvider() {
             fun read(key: String): String = prefs.getString("flutter." + key, "") ?: ""
 
             val views = RemoteViews(context.packageName, R.layout.todo_widget)
+
+            // Look chosen in the app: navy (default), light or gold.
+            val style = read("widget_style")
+            val background = when (style) {
+                "light" -> R.drawable.widget_bg_light
+                "gold" -> R.drawable.widget_bg_gold
+                else -> R.drawable.widget_bg
+            }
+            val titleColor = when (style) {
+                "light" -> Color.parseColor("#7A5C05")
+                "gold" -> Color.parseColor("#14213D")
+                else -> Color.parseColor("#E9C46A")
+            }
+            val textColor = when (style) {
+                "light", "gold" -> Color.parseColor("#14213D")
+                else -> Color.parseColor("#FFFFFF")
+            }
+            val subColor = when (style) {
+                "light" -> Color.parseColor("#5D6475")
+                "gold" -> Color.parseColor("#3B3420")
+                else -> Color.parseColor("#AAB3C8")
+            }
+            views.setInt(R.id.widget_root, "setBackgroundResource", background)
+            views.setTextColor(R.id.widget_title, titleColor)
+            views.setTextColor(R.id.widget_l1, textColor)
+            views.setTextColor(R.id.widget_l2, textColor)
+            views.setTextColor(R.id.widget_l3, textColor)
+            views.setTextColor(R.id.widget_sub, subColor)
             val title = read("widget_title")
             views.setTextViewText(R.id.widget_title, if (title.isEmpty()) "Today's top 3" else title)
             views.setTextViewText(R.id.widget_sub, read("widget_sub"))

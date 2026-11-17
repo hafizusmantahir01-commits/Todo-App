@@ -43,8 +43,11 @@ class AppStore extends ChangeNotifier {
   // Profile picture: 'initial' (first letter), 'avatar' (built-in picture) or 'photo'.
   String avatarKind = 'initial';
   int avatarIndex = 0;
-  int avatarColor = 0xFFC9A227;
+  int avatarColor = 0xFFF6EDCF;
   String? photoPath;
+
+  /// The custom avatar the user built (see AvatarSpec), as JSON.
+  String? avatarSpec;
 
   // Language
   Lang lang = Lang.en;
@@ -61,6 +64,13 @@ class AppStore extends ChangeNotifier {
   // Ramzan: 'auto' follows the Hijri calendar, or 'on' / 'off'.
   String ramzanMode = 'auto';
   int hijriOffset = 0;
+
+  /// First day of the week: DateTime.monday (default), DateTime.saturday or DateTime.sunday.
+  int weekStart = DateTime.monday;
+
+  // Home-screen widget: what it shows ('top3', 'next', 'prayer', 'habits') and its look ('navy', 'light', 'gold').
+  String widgetContent = 'top3';
+  String widgetStyle = 'navy';
 
   // Phone calendar and focus sound
   bool calendarOn = false;
@@ -146,8 +156,9 @@ class AppStore extends ChangeNotifier {
     longBreakMinutes = p.getInt('longBreak') ?? 15;
     avatarKind = p.getString('avatarKind') ?? 'initial';
     avatarIndex = p.getInt('avatarIndex') ?? 0;
-    avatarColor = p.getInt('avatarColor') ?? 0xFFC9A227;
+    avatarColor = p.getInt('avatarColor') ?? 0xFFF6EDCF;
     photoPath = p.getString('photoPath');
+    avatarSpec = p.getString('avatarSpec');
     lang = enumByName(Lang.values, p.getString('lang'), Lang.en);
     currentLang = lang;
     remindersOn = p.getBool('remindersOn') ?? true;
@@ -162,6 +173,9 @@ class AppStore extends ChangeNotifier {
     hijriOffset = p.getInt('hijriOffset') ?? 0;
     calendarOn = p.getBool('calendarOn') ?? false;
     focusSound = p.getString('focusSound') ?? 'off';
+    weekStart = p.getInt('weekStart') ?? DateTime.monday;
+    widgetContent = p.getString('widgetContent') ?? 'top3';
+    widgetStyle = p.getString('widgetStyle') ?? 'navy';
   }
 
   /// Saves any of the extra settings and refreshes reminders.
@@ -178,6 +192,9 @@ class AppStore extends ChangeNotifier {
     int? hijriAdjust,
     bool? calendar,
     String? sound,
+    int? weekStartDay,
+    String? widgetShows,
+    String? widgetLook,
   }) {
     final p = _prefs;
     if (language != null) {
@@ -229,12 +246,36 @@ class AppStore extends ChangeNotifier {
       focusSound = sound;
       p?.setString('focusSound', sound);
     }
+    if (weekStartDay != null) {
+      weekStart = weekStartDay;
+      p?.setInt('weekStart', weekStartDay);
+    }
+    if (widgetShows != null) {
+      widgetContent = widgetShows;
+      p?.setString('widgetContent', widgetShows);
+    }
+    if (widgetLook != null) {
+      widgetStyle = widgetLook;
+      p?.setString('widgetStyle', widgetLook);
+    }
     notifyListeners();
     _scheduleSideEffects();
   }
 
   // ---------------- Weekly goals ----------------
-  String weekKey(DateTime d) => dayKey(DateTime(d.year, d.month, d.day - (d.weekday - 1)));
+  /// The first day of the week that contains [d], following [weekStart].
+  DateTime startOfWeek(DateTime d) {
+    final back = (d.weekday - weekStart) % 7;
+    return DateTime(d.year, d.month, d.day - back);
+  }
+
+  /// The 7 days of the week that contains [d].
+  List<DateTime> weekOf(DateTime d) {
+    final s = startOfWeek(d);
+    return [for (var i = 0; i < 7; i++) DateTime(s.year, s.month, s.day + i)];
+  }
+
+  String weekKey(DateTime d) => dayKey(startOfWeek(d));
 
   List<String> goalsFor(DateTime weekDay) => weekGoals[weekKey(weekDay)] ?? const [];
 
@@ -291,17 +332,38 @@ class AppStore extends ChangeNotifier {
   }
 
   // ---------------- Settings ----------------
+  /// A fresh install that got old settings back (phone backup, or installed over
+  /// an old copy from another install) shows the welcome screens again.
+  void checkInstall(int installedAt) {
+    final p = _prefs;
+    if (p == null || installedAt <= 0) return;
+    final saved = p.getInt('installedAt');
+    if (saved != null && saved != installedAt && onboarded) {
+      onboarded = false;
+      p.setBool('onboarded', false);
+    }
+    p.setInt('installedAt', installedAt);
+  }
+
+  /// Shows the welcome and setup screens again on next start. Tasks are kept.
+  void restartIntro() {
+    onboarded = false;
+    _prefs?.setBool('onboarded', false);
+  }
+
   /// Saves the profile picture choice.
-  void setAvatar({required String kind, int? index, int? color, String? photo}) {
+  void setAvatar({required String kind, int? index, int? color, String? photo, String? spec}) {
     avatarKind = kind;
     if (index != null) avatarIndex = index;
     if (color != null) avatarColor = color;
     if (photo != null) photoPath = photo;
+    if (spec != null) avatarSpec = spec;
     final p = _prefs;
     p?.setString('avatarKind', avatarKind);
     p?.setInt('avatarIndex', avatarIndex);
     p?.setInt('avatarColor', avatarColor);
     if (photoPath != null) p?.setString('photoPath', photoPath!);
+    if (avatarSpec != null) p?.setString('avatarSpec', avatarSpec!);
     notifyListeners();
   }
 

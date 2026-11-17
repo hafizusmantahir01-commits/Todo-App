@@ -38,6 +38,15 @@ class Native {
     }
   }
 
+  /// When this copy of the app was installed (milliseconds), or 0 if unknown.
+  static Future<int> firstInstallTime() async {
+    try {
+      return (await _ch.invokeMethod<int>('firstInstallTime')) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   /// Asks Android to redraw the home-screen widget.
   static Future<void> updateWidget() async {
     try {

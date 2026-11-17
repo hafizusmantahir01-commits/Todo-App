@@ -20,7 +20,7 @@ Remove-Item -Recurse -Force lib, test -ErrorAction SilentlyContinue
 Copy-Item "$env:TEMP\todo3\todo_app\*" -Destination "E:\Projects\Todo-App" -Recurse -Force
 Select-String -Path pubspec.yaml -Pattern "version:"
 ```
-`version: 3.1.0+7` aana chahiye. Is copy se `android` folder ki kuch files bhi badlti hain (AndroidManifest, build.gradle.kts, MainActivity.kt, widget) — yeh zaroori hai.
+`version: 3.3.2+15` aana chahiye. Is copy se `android` folder ki kuch files bhi badlti hain (AndroidManifest, build.gradle.kts, MainActivity.kt, widget) — yeh zaroori hai.
 
 **3. Build**
 ```powershell
