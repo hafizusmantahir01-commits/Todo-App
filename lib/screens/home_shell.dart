@@ -80,13 +80,15 @@ class _HomeShellState extends State<HomeShell> {
                 _Tab(icon: Icons.calendar_month_outlined, label: tr('Planner'), active: _index == 1, onTap: () => _go(1)),
                 Semantics(
                   button: true,
-                  label: tr('Add task'),
+                  label: _index == 2 ? tr('New habit') : tr('Add task'),
                   child: Material(
                     color: c.orange,
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      onTap: () => showQuickAdd(context, initialDate: _index == 0 ? DateTime.now() : null),
+                      onTap: () => _index == 2
+                          ? showHabitEditor(context)
+                          : showQuickAdd(context, initialDate: _index == 0 ? DateTime.now() : null),
                       child: SizedBox(width: 56, height: 56, child: Icon(Icons.add_rounded, size: 30, color: c.onOrange)),
                     ),
                   ),

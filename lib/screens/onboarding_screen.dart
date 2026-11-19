@@ -98,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     _Page(
                       title: tr('Type like you talk.'),
-                      body: tr('Write “kal shaam 6 baje gym” and the date, time and list fill in by themselves. English or Roman Urdu, both work.'),
+                      body: tr('Write “gym tomorrow 6pm” and the date, time and list fill in by themselves. English, Urdu or Roman Urdu, all work.'),
                       art: _TypingDemo(),
                     ),
                     _Page(
@@ -257,8 +257,8 @@ class _TypingDemoState extends State<_TypingDemo> {
                 runSpacing: 6,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  word(tr('kal'), 1, c.orangeSoft, c.orangeText),
-                  word(tr('shaam 6 baje'), 2, c.sel, c.onSel),
+                  word(tr('tomorrow'), 1, c.orangeSoft, c.orangeText),
+                  word(tr('6pm'), 2, c.sel, c.onSel),
                   word(tr('gym'), 99, c.card, c.ink),
                   word(tr('#Health'), 3, c.tintOf(health), c.textOf(health)),
                 ],

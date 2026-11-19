@@ -41,12 +41,6 @@ class HabitsScreen extends StatelessWidget {
                   child: Text(tr('Habits'),
                       style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800, letterSpacing: -0.6, color: c.ink, height: 1.2)),
                 ),
-                BigButton(
-                  label: tr('New habit'),
-                  icon: Icons.add_rounded,
-                  height: 44,
-                  onPressed: () => showHabitEditor(context),
-                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -105,7 +99,7 @@ class HabitsScreen extends StatelessWidget {
                             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: c.onInv, height: 1.25),
                           ),
                           const SizedBox(height: 4),
-                          Text(tr('Small daily wins add up. Long-press a habit to edit it.'),
+                          Text(tr('Tap ✓ once each day. A fresh week starts every {day}.', {'day': dayName(store.weekStart)}),
                               style: TextStyle(fontSize: 13, color: c.invMuted, height: 1.4)),
                         ],
                       ),
@@ -174,6 +168,14 @@ class _HabitRow extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: c.ink, height: 1.25)),
                           ),
+                          if (habit.isCount)
+                            Container(
+                              margin: const EdgeInsetsDirectional.only(end: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(color: c.raised, borderRadius: BorderRadius.circular(8)),
+                              child: Text('$count/${habit.target}',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: c.ink, height: 1.1)),
+                            ),
                           if (streak > 0)
                             Text(tr('{n}-day streak', {'n': streak}),
                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c.orangeText, height: 1.2)),
@@ -188,8 +190,8 @@ class _HabitRow extends StatelessWidget {
                               final future = d.isAfter(todayStart);
                               final ok = store.habitDone(habit, d);
                               return Container(
-                                width: 22,
-                                height: 22,
+                                width: 21,
+                                height: 21,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: ok ? c.orange : (future ? Colors.transparent : c.raised),
@@ -209,12 +211,7 @@ class _HabitRow extends StatelessWidget {
                                 ),
                               );
                             }),
-                            const SizedBox(width: 4),
-                          ],
-                          if (habit.isCount) ...[
-                            const SizedBox(width: 4),
-                            Text('$count/${habit.target}',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c.muted, height: 1)),
+                            const SizedBox(width: 3),
                           ],
                         ],
                       ),
@@ -232,7 +229,15 @@ class _HabitRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
                         HapticFeedback.lightImpact();
+                        if (doneToday) {
+                          // Already done today: ask what to do instead of silently resetting.
+                          _doneOptions(context, habit, today);
+                          return;
+                        }
                         store.tapHabit(habit, today);
+                        if (store.habitDone(habit, today)) {
+                          toast(context, tr('Well done! “{name}” is done for today.', {'name': habit.name}));
+                        }
                       },
                       child: SizedBox(
                         width: 50,
@@ -410,6 +415,123 @@ class _HabitEditorState extends State<_HabitEditor> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown when a finished habit is tapped again: keep it, do it again today, or delete it.
+Future<void> _doneOptions(BuildContext context, Habit habit, DateTime day) async {
+  final store = AppStore.instance;
+  final c = context.c;
+  final choice = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: c.card,
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(tr('“{name}” is done for today', {'name': habit.name}),
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: c.ink, height: 1.3)),
+            const SizedBox(height: 6),
+            Text(tr('What would you like to do?'), style: TextStyle(fontSize: 14, color: c.muted)),
+            const SizedBox(height: 14),
+            _OptionTile(
+              icon: Icons.check_circle_outline_rounded,
+              title: tr('Keep it'),
+              subtitle: tr('Stays done today and comes back tomorrow'),
+              onTap: () => Navigator.pop(ctx, 'keep'),
+            ),
+            _OptionTile(
+              icon: Icons.replay_rounded,
+              title: habit.isCount ? tr('Start again today') : tr('Mark as not done'),
+              subtitle: habit.isCount
+                  ? tr('Count goes back to 0/{n} for today', {'n': habit.target})
+                  : tr('Undo today’s tick'),
+              onTap: () => Navigator.pop(ctx, 'again'),
+            ),
+            _OptionTile(
+              icon: Icons.delete_outline_rounded,
+              title: tr('Delete habit'),
+              subtitle: tr('Removes it and its history for good'),
+              danger: true,
+              onTap: () => Navigator.pop(ctx, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (!context.mounted) return;
+  switch (choice) {
+    case 'again':
+      store.resetHabitDay(habit, day);
+    case 'delete':
+      final sure = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: c.card,
+          title: Text(tr('Delete this habit?')),
+          content: Text(tr('“{name}” and all its days will be removed. This cannot be undone.', {'name': habit.name})),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Cancel'))),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: c.danger),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr('Delete')),
+            ),
+          ],
+        ),
+      );
+      if (sure == true) store.deleteHabit(habit);
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  const _OptionTile({required this.icon, required this.title, required this.subtitle, required this.onTap, this.danger = false});
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final color = danger ? c.danger : c.ink;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: c.raised,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Row(
+              children: [
+                Icon(icon, color: danger ? c.danger : c.orangeText),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: TextStyle(fontWeight: FontWeight.w800, color: color, height: 1.25)),
+                      const SizedBox(height: 2),
+                      Text(subtitle, style: TextStyle(fontSize: 12.5, color: c.muted, height: 1.3)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -1,7 +1,7 @@
 name: todo_app
 description: "Todo App - plan your day around prayer times, with Roman Urdu smart input, habits and a focus timer."
 publish_to: 'none'
-version: 3.3.2+15
+version: 3.5.2+19
 
 environment:
   sdk: ^3.6.0
@@ -20,6 +20,7 @@ dependencies:
   audioplayers: ^6.5.0
   share_plus: ">=11.0.0 <14.0.0"
   file_selector: ^1.0.3
+  pdf: ">=3.10.0 <4.0.0"
 
 dev_dependencies:
   flutter_test:

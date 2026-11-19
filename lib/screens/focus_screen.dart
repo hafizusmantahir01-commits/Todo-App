@@ -333,7 +333,7 @@ class _FocusScreenState extends State<FocusScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        _running ? 'Ends at ${fmtTime(ends)}' : (_fresh ? _label(_mode) : tr('Paused')),
+                                        _running ? tr('Ends at {time}', {'time': fmtTime(ends)}) : (_fresh ? _label(_mode) : tr('Paused')),
                                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.muted),
                                       ),
                                     ],

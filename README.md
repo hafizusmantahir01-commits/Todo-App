@@ -20,7 +20,7 @@ Remove-Item -Recurse -Force lib, test -ErrorAction SilentlyContinue
 Copy-Item "$env:TEMP\todo3\todo_app\*" -Destination "E:\Projects\Todo-App" -Recurse -Force
 Select-String -Path pubspec.yaml -Pattern "version:"
 ```
-`version: 3.3.2+15` aana chahiye. Is copy se `android` folder ki kuch files bhi badlti hain (AndroidManifest, build.gradle.kts, MainActivity.kt, widget) — yeh zaroori hai.
+`version: 3.5.2+19` aana chahiye. Is copy se `android` folder ki kuch files bhi badlti hain (AndroidManifest, build.gradle.kts, MainActivity.kt, widget) — yeh zaroori hai.
 
 **3. Build**
 ```powershell
@@ -49,7 +49,7 @@ APK: `build\app\outputs\flutter-apk\app-release.apk`. Phone se purani app uninst
 | Habits + streaks | Habits tab |
 | Focus timer: 1–180 min, +/−, sounds (Rain, White, Deep) | Task > Focus |
 | Day review: mood, note, bache kaam kal par, hafte ki insights | Review tab |
-| Backup file save / restore | Profile > Your data |
+| Backup file save / restore, PDF report | Profile > Your data |
 | Home-screen widget: aaj ke top 3 | Home screen par long-press > Widgets > Todo App |
 
 ## Permissions (sirf feature use karne par maangi jati hain)

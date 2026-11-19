@@ -201,7 +201,14 @@ class ChoicePill extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Container(
+        child: LayoutBuilder(builder: (context, box) {
+          final bounded = box.hasBoundedWidth;
+          final text = Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(color: fg, fontWeight: selected ? FontWeight.w800 : FontWeight.w600, fontSize: 13.5, height: 1.2),
+          );
+          return Container(
           height: 42,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           alignment: Alignment.center,
@@ -213,13 +220,15 @@ class ChoicePill extends StatelessWidget {
                 Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, borderRadius: BorderRadius.circular(3))),
                 const SizedBox(width: 7),
               ],
-              Text(
-                label,
-                style: TextStyle(color: fg, fontWeight: selected ? FontWeight.w800 : FontWeight.w600, fontSize: 13.5, height: 1.2),
-              ),
+              if (bounded)
+                // In a fixed-width spot, long labels shrink a little instead of overflowing.
+                Flexible(child: FittedBox(fit: BoxFit.scaleDown, child: text))
+              else
+                text,
             ],
           ),
-        ),
+        );
+        }),
       ),
     );
   }
@@ -363,5 +372,8 @@ void toast(BuildContext context, String message, {String? actionLabel, VoidCallb
   m.showSnackBar(SnackBar(
     content: Text(message),
     action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: onAction ?? () {}),
+    // Hide by itself after a few seconds, even with an Undo button.
+    persist: false,
+    duration: Duration(seconds: actionLabel == null ? 2 : 3),
   ));
 }

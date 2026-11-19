@@ -48,7 +48,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: c.card,
         title: Text(tr('Delete this task?')),
-        content: Text('"${t.title}" will be removed.'),
+        content: Text(tr('“{title}” will be removed.', {'title': t.title})),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Cancel'))),
           FilledButton(
@@ -66,6 +66,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     messenger.showSnackBar(SnackBar(
       content: Text(tr('Task deleted')),
       action: SnackBarAction(label: tr('Undo'), onPressed: () => store.restoreTask(t, index)),
+      // Hide by itself after a few seconds, even with the Undo button.
+      persist: false,
+      duration: const Duration(seconds: 3),
     ));
   }
 

@@ -58,6 +58,23 @@ class _PlannerScreenState extends State<PlannerScreen> {
     _loadEvents();
   }
 
+  Future<void> _showMore(List<Object> items) async {
+    final id = await pickOption<String>(
+      context,
+      tr('At the same time'),
+      [
+        for (final o in items)
+          if (o is Task)
+            OptionItem(o.id, o.title, subtitle: fmtTime(o.due!), icon: Icons.circle, color: Color(store.listById(o.listId).color))
+          else if (o is PhoneEvent)
+            OptionItem('', o.title, subtitle: '${fmtTime(o.start)} · ${tr('From your phone calendar')}', icon: Icons.event_rounded),
+      ],
+      null,
+    );
+    if (id == null || id.isEmpty || !mounted) return;
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => TaskDetailScreen(taskId: id)));
+  }
+
   /// Loads the whole week around the selected day from the phone's calendar.
   Future<void> _loadEvents() async {
     _calendarWasOn = store.calendarOn;
@@ -119,24 +136,55 @@ class _PlannerScreenState extends State<PlannerScreen> {
         final timedEvents = events.where((e) => !e.allDay).toList();
         final allDay = events.where((e) => e.allDay).toList();
 
-        // Lanes for overlapping blocks (tasks and events together).
-        final entries = <(DateTime, DateTime, Object)>[
-          for (final t in timed) (t.due!, t.due!.add(Duration(minutes: t.durationMinutes)), t),
-          for (final e in timedEvents) (e.start, e.end, e),
-        ]..sort((a, b) => a.$1.compareTo(b.$1));
-        final laneEnds = <DateTime>[];
-        final lanes = <Object, int>{};
-        for (final en in entries) {
-          var lane = laneEnds.indexWhere((e) => !e.isAfter(en.$1));
-          if (lane == -1) {
-            lane = laneEnds.length;
-            laneEnds.add(en.$2);
-          } else {
-            laneEnds[lane] = en.$2;
-          }
-          lanes[en.$3] = lane;
+        // Side-by-side layout for blocks that overlap (tasks and events together).
+        // A block is at least 40 minutes tall on screen, so that is used for overlap too.
+        DateTime visualEnd(DateTime start, DateTime end) {
+          final minEnd = start.add(const Duration(minutes: 40));
+          return end.isAfter(minEnd) ? end : minEnd;
         }
-        final laneCount = math.max(1, math.min(3, laneEnds.length));
+        final entries = <(DateTime, DateTime, Object)>[
+          for (final t in timed) (t.due!, visualEnd(t.due!, t.due!.add(Duration(minutes: t.durationMinutes))), t),
+          for (final e in timedEvents) (e.start, visualEnd(e.start, e.end), e),
+        ]..sort((a, b) => a.$1.compareTo(b.$1));
+        final laneOf = <Object, int>{};
+        final colsOf = <Object, int>{};
+        final hidden = <Object>{};
+        final more = <(DateTime, List<Object>)>[];
+        var i = 0;
+        while (i < entries.length) {
+          // Collect one group of blocks that touch each other in time.
+          var groupEnd = entries[i].$2;
+          final group = [entries[i]];
+          var j = i + 1;
+          while (j < entries.length && entries[j].$1.isBefore(groupEnd)) {
+            group.add(entries[j]);
+            if (entries[j].$2.isAfter(groupEnd)) groupEnd = entries[j].$2;
+            j++;
+          }
+          final laneEnds = <DateTime>[];
+          for (final en in group) {
+            var lane = laneEnds.indexWhere((e) => !e.isAfter(en.$1));
+            if (lane == -1) {
+              lane = laneEnds.length;
+              laneEnds.add(en.$2);
+            } else {
+              laneEnds[lane] = en.$2;
+            }
+            laneOf[en.$3] = lane;
+          }
+          // At most three columns; anything beyond goes behind a "+N more" button.
+          final cols = math.min(3, laneEnds.length);
+          final extra = <Object>[];
+          for (final en in group) {
+            colsOf[en.$3] = cols;
+            if (laneEnds.length > 3 && laneOf[en.$3]! >= 2) {
+              hidden.add(en.$3);
+              extra.add(en.$3);
+            }
+          }
+          if (extra.isNotEmpty) more.add((group.first.$1, extra));
+          i = j;
+        }
 
         // Free slots of an hour or more between 8 AM and 10 PM.
         final free = <(DateTime, int)>[];
@@ -247,7 +295,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
               child: LayoutBuilder(
                 builder: (context, box) {
                   final width = box.maxWidth;
-                  final colW = (width - _labelW - 6) / laneCount;
+                  double colW(Object o) => (width - _labelW - 6) / (colsOf[o] ?? 1);
                   final height = (_endHour - _startHour) * _hourH;
                   return SizedBox(
                     height: height,
@@ -307,21 +355,29 @@ class _PlannerScreenState extends State<PlannerScreen> {
                               ),
                             ),
                           ),
-                        for (final e in timedEvents)
+                        for (final e in timedEvents.where((e) => !hidden.contains(e)))
                           Positioned(
-                            left: _labelW + (lanes[e] ?? 0).clamp(0, laneCount - 1) * colW,
-                            width: colW - 4,
+                            left: _labelW + (laneOf[e] ?? 0) * colW(e),
+                            width: colW(e) - 4,
                             top: _y(e.start) + 1,
                             height: math.max(38.0, e.end.difference(e.start).inMinutes / 60 * _hourH - 3),
                             child: _EventBlock(event: e),
                           ),
-                        for (final t in timed)
+                        for (final t in timed.where((t) => !hidden.contains(t)))
                           Positioned(
-                            left: _labelW + (lanes[t] ?? 0).clamp(0, laneCount - 1) * colW,
-                            width: colW - 4,
+                            left: _labelW + (laneOf[t] ?? 0) * colW(t),
+                            width: colW(t) - 4,
                             top: _y(t.due!) + 1,
                             height: math.max(38.0, t.durationMinutes / 60 * _hourH - 3),
                             child: _Block(task: t),
+                          ),
+                        for (final m in more)
+                          Positioned(
+                            left: _labelW + 2 * ((width - _labelW - 6) / 3),
+                            width: (width - _labelW - 6) / 3 - 4,
+                            top: _y(m.$1) + 1,
+                            height: 38,
+                            child: _MoreChip(count: m.$2.length, onTap: () => _showMore(m.$2)),
                           ),
                         if (isToday && now.hour >= _startHour)
                           Positioned(
@@ -519,6 +575,30 @@ class _EventBlock extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoreChip extends StatelessWidget {
+  const _MoreChip({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    return Material(
+      color: c.inv,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Center(
+          child: Text(tr('+{n} more', {'n': count}),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: c.onInv, height: 1)),
         ),
       ),
     );

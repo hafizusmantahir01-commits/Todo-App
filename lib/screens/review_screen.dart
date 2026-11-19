@@ -200,8 +200,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                         children: [
                                           Icon(_moods[i].$1, color: log.mood == i ? c.orangeText : c.ink),
                                           const SizedBox(height: 4),
-                                          Text(tr(_moods[i].$2),
-                                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: c.ink, height: 1)),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 3),
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(tr(_moods[i].$2),
+                                                  maxLines: 1,
+                                                  style: TextStyle(
+                                                      fontSize: 11.5, fontWeight: FontWeight.w700, color: c.ink, height: 1.1)),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),

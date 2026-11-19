@@ -123,7 +123,7 @@ class _TodayScreenState extends State<TodayScreen> {
             ArcMarker(1, tr('10 PM')),
           ];
           sun = f(now);
-          arcLine = today.isEmpty ? tr('Nothing left for today') : '${today.length} tasks left today';
+          arcLine = today.isEmpty ? tr('Nothing left for today') : trn(today.length, '1 task left today', '{n} tasks left today');
         }
 
         // ----- Groups -----
@@ -132,18 +132,18 @@ class _TodayScreenState extends State<TodayScreen> {
         final groups = <_Group>[];
         if (pt != null) {
           final z = pt[Prayer.dhuhr], a = pt[Prayer.asr], m = pt[Prayer.maghrib];
-          groups.add(_Group(tr('Before Zuhr'), 'until ${fmtTime(z)}', timed.where((t) => t.due!.isBefore(z)).toList()));
+          groups.add(_Group(tr('Before Zuhr'), tr('until {time}', {'time': fmtTime(z)}), timed.where((t) => t.due!.isBefore(z)).toList()));
           groups.add(_Group(tr('Zuhr to Asr'), '${fmtTime(z)} – ${fmtTime(a)}',
               timed.where((t) => !t.due!.isBefore(z) && t.due!.isBefore(a)).toList()));
           groups.add(_Group(tr('Asr to Maghrib'), '${fmtTime(a)} – ${fmtTime(m)}',
               timed.where((t) => !t.due!.isBefore(a) && t.due!.isBefore(m)).toList()));
-          groups.add(_Group(tr('After Maghrib'), 'from ${fmtTime(m)}', timed.where((t) => !t.due!.isBefore(m)).toList()));
+          groups.add(_Group(tr('After Maghrib'), tr('from {time}', {'time': fmtTime(m)}), timed.where((t) => !t.due!.isBefore(m)).toList()));
         } else {
-          groups.add(_Group(tr('Morning'), 'until 12 PM', timed.where((t) => t.due!.hour < 12).toList()));
+          groups.add(_Group(tr('Morning'), tr('until {time}', {'time': fmtHour(12)}), timed.where((t) => t.due!.hour < 12).toList()));
           groups.add(_Group(tr('Afternoon'), '12 – 5 PM', timed.where((t) => t.due!.hour >= 12 && t.due!.hour < 17).toList()));
-          groups.add(_Group(tr('Evening'), 'from 5 PM', timed.where((t) => t.due!.hour >= 17).toList()));
+          groups.add(_Group(tr('Evening'), tr('from {time}', {'time': fmtHour(17)}), timed.where((t) => t.due!.hour >= 17).toList()));
         }
-        if (untimed.isNotEmpty) groups.add(_Group(tr('Anytime today'), 'no set time', untimed));
+        if (untimed.isNotEmpty) groups.add(_Group(tr('Anytime today'), tr('no set time'), untimed));
 
         final nothing = overdue.isEmpty && today.isEmpty && anytime.isEmpty && doneToday.isEmpty;
 
@@ -168,7 +168,7 @@ class _TodayScreenState extends State<TodayScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('${fmtLongDate(now)} · ${hijri.day} ${hijriMonthName(hijri.month)}',
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.peachText, height: 1.2)),
                             const SizedBox(height: 4),
@@ -231,7 +231,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Text(
                           total == 0
                               ? tr('Nothing due today')
-                              : (pct >= 1 ? tr('All done today') : '${doneToday.length} of $total done'),
+                              : (pct >= 1 ? tr('All done today') : tr('{a} of {b} done', {'a': doneToday.length, 'b': total})),
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: c.onPeach, height: 1.2),
                         ),
                       ],
@@ -314,7 +314,7 @@ class _TodayScreenState extends State<TodayScreen> {
                     EmptyState(
                       icon: Icons.wb_sunny_outlined,
                       title: tr('A clear day'),
-                      message: tr('Tap + and type naturally.\nTry: kal shaam 6 baje gym #Health'),
+                      message: tr('Tap + and type naturally.\nTry: gym tomorrow 6pm #Health'),
                       action: BigButton(
                         label: tr('Add a task'),
                         icon: Icons.add_rounded,
@@ -339,11 +339,11 @@ class _TodayScreenState extends State<TodayScreen> {
                   ],
                   if (doneToday.isNotEmpty) ...[
                     SectionTitle(
-                      'Completed today',
+                      tr('Completed today'),
                       trailing: TextButton(
                         onPressed: () => setState(() => _showDone = !_showDone),
                         style: TextButton.styleFrom(foregroundColor: c.orangeText),
-                        child: Text(_showDone ? tr('Hide') : 'Show ${doneToday.length}'),
+                        child: Text(_showDone ? tr('Hide') : tr('Show {n}', {'n': doneToday.length})),
                       ),
                     ),
                     if (_showDone) for (final t in doneToday) TaskTile(task: t),
@@ -505,7 +505,7 @@ class StaleReviewSheet extends StatelessWidget {
                         children: [
                           Text(t.title, style: TextStyle(fontWeight: FontWeight.w800, color: c.ink)),
                           const SizedBox(height: 2),
-                          Text(t.due == null ? tr('No date, untouched for a week') : 'Was due ${dueLabel(t)}',
+                          Text(t.due == null ? tr('No date, untouched for a week') : tr('Was due {when}', {'when': dueLabel(t)}),
                               style: TextStyle(fontSize: 13, color: c.muted)),
                           const SizedBox(height: 12),
                           Wrap(

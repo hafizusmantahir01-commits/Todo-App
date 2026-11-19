@@ -51,7 +51,7 @@ class HelpScreen extends StatelessWidget {
               children: [
                 Text(tr('Example'), style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: c.invMuted)),
                 const SizedBox(height: 6),
-                Text(tr('kal Maghrib ke baad gym #Health !high'),
+                Text(tr('gym tomorrow after Maghrib #Health !high'),
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: c.orange, height: 1.35)),
                 const SizedBox(height: 6),
                 Text(tr('Creates “Gym” for tomorrow, 15 minutes after Maghrib, in Health, high priority.'),

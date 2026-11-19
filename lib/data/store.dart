@@ -616,6 +616,12 @@ class AppStore extends ChangeNotifier {
     _changed();
   }
 
+  /// Clears one day of a habit so it can be done again from zero.
+  void resetHabitDay(Habit h, DateTime day) {
+    h.log.remove(dayKey(day));
+    _changed();
+  }
+
   bool habitDone(Habit h, DateTime day) => (h.log[dayKey(day)] ?? 0) >= h.target;
 
   int habitStreak(Habit h) {

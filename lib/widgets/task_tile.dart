@@ -22,7 +22,7 @@ class TaskTile extends StatelessWidget {
     final oldRepeat = task.repeat;
     HapticFeedback.mediumImpact();
     final spawned = store.toggleDone(task);
-    toast(context, wasDone ? tr('Marked as not done') : 'Done: ${task.title}', actionLabel: tr('Undo'), onAction: () {
+    toast(context, wasDone ? tr('Marked as not done') : tr('Done: {title}', {'title': task.title}), actionLabel: tr('Undo'), onAction: () {
       if (wasDone) {
         store.toggleDone(task);
       } else {

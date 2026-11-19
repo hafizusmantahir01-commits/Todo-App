@@ -218,38 +218,70 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
     }
   }
 
+  bool _speechReady = false;
+  String? _speechLocale;
+  String _textBeforeVoice = '';
+
+  /// Speak a task. Keeps listening through short pauses and adds the words
+  /// to whatever was already typed.
   Future<void> _voice() async {
     if (_listening) {
       await _speech.stop();
-      setState(() => _listening = false);
+      if (mounted) setState(() => _listening = false);
       return;
     }
-    final ok = await _speech.initialize(
-      onStatus: (st) {
-        if ((st == 'done' || st == 'notListening') && mounted) setState(() => _listening = false);
-      },
-      onError: (_) {
-        if (mounted) setState(() => _listening = false);
-      },
-    );
+    if (!_speechReady) {
+      _speechReady = await _speech.initialize(
+        onStatus: (st) {
+          if ((st == 'done' || st == 'notListening') && mounted && _listening) {
+            setState(() => _listening = false);
+          }
+        },
+        onError: (e) {
+          if (mounted) setState(() => _listening = false);
+        },
+      );
+      if (_speechReady) {
+        // Use Urdu when the phone supports it and the app is in Urdu or Roman Urdu.
+        if (store.lang != Lang.en) {
+          final locales = await _speech.locales();
+          for (final l in locales) {
+            if (l.localeId.toLowerCase().startsWith('ur')) {
+              _speechLocale = l.localeId;
+              break;
+            }
+          }
+        }
+      }
+    }
     if (!mounted) return;
-    if (!ok) {
+    if (!_speechReady) {
       toast(context, tr('Voice typing is not available on this phone.'));
       return;
     }
+    _textBeforeVoice = _text.text.trim();
     HapticFeedback.mediumImpact();
     setState(() => _listening = true);
     await _speech.listen(
       onResult: (r) {
-        final words = r.recognizedWords;
-        _text.value = TextEditingValue(text: words, selection: TextSelection.collapsed(offset: words.length));
-        _onChanged(words);
+        if (!mounted) return;
+        final words = r.recognizedWords.trim();
+        final full = _textBeforeVoice.isEmpty ? words : '$_textBeforeVoice $words';
+        _text.value = TextEditingValue(text: full, selection: TextSelection.collapsed(offset: full.length));
+        _onChanged(full);
+        if (r.finalResult && mounted) setState(() => _listening = false);
       },
+      // Older and newer versions of the speech package both accept these.
+      // ignore: deprecated_member_use
+      localeId: _speechLocale,
+      // ignore: deprecated_member_use
+      listenFor: const Duration(seconds: 60),
+      // ignore: deprecated_member_use
+      pauseFor: const Duration(seconds: 5),
       listenOptions: SpeechListenOptions(
         partialResults: true,
-        localeId: store.lang == Lang.en ? 'en_US' : 'ur_PK',
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3),
+        cancelOnError: false,
+        listenMode: ListenMode.dictation,
       ),
     );
   }
@@ -424,7 +456,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c.ink, height: 1.5),
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            hintText: prayers ? tr('kal Maghrib ke baad ammi ko call') : tr('kal shaam 6 baje gym #Health'),
+                            hintText: prayers ? tr('call mom tomorrow after Maghrib') : tr('gym tomorrow 6pm #Health'),
                             hintStyle: TextStyle(color: c.muted, fontWeight: FontWeight.w500),
                           ),
                           onChanged: _onChanged,
@@ -433,7 +465,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
                         if (_listening)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6),
-                            child: Text(tr('Listening… speak naturally, like “kal Maghrib ke baad gym”'),
+                            child: Text(tr('Listening… speak naturally, like “gym tomorrow after Maghrib”'),
                                 style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: c.orangeText)),
                           ),
                         Row(

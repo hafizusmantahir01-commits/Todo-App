@@ -138,7 +138,7 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      BigButton(label: count == 1 ? tr('Add 1 task') : 'Add $count tasks', onPressed: count == 0 ? null : _addAll),
+                      BigButton(label: trn(count, 'Add 1 task', 'Add {n} tasks'), onPressed: count == 0 ? null : _addAll),
                       TextButton(
                         onPressed: () => setState(() => _preview = false),
                         style: TextButton.styleFrom(foregroundColor: c.orangeText),
@@ -165,7 +165,7 @@ class _BrainDumpScreenState extends State<BrainDumpScreen> {
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             hintText: tr(
-                                'bijli ka bill jama karna kal\nammi ko call Maghrib ke baad\nassignment submit juma #Study !high\ndoodh aur anday #Shopping'),
+                                'pay electricity bill tomorrow\ncall mom after Maghrib\nsubmit assignment friday #Study !high\nmilk and eggs #Shopping'),
                             hintStyle: TextStyle(color: c.muted),
                             filled: true,
                             fillColor: c.card,

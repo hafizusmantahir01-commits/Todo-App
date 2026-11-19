@@ -6,6 +6,7 @@ import '../l10n/strings.dart';
 import '../services/backup.dart';
 import '../services/native.dart';
 import '../services/notifications.dart';
+import '../services/pdf_report.dart';
 import '../utils/dates.dart';
 import '../theme/app_colors.dart';
 import '../utils/prayer_times.dart';
@@ -21,7 +22,7 @@ import 'weekly_plan_screen.dart';
 import 'widget_settings_screen.dart';
 import 'profile_setup_screen.dart';
 
-const appVersion = '3.3.2';
+const appVersion = '3.5.2';
 const contactEmail = 'innovexa.technologies01@gmail.com';
 
 /// Profile and settings.
@@ -215,7 +216,7 @@ class MeScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
                         child: Text(
-                          'Times are calculated on your phone (Karachi method). Your local masjid may differ by a few minutes.',
+                          tr('Times are calculated on your phone (Karachi method). Your local masjid may differ by a few minutes.'),
                           style: TextStyle(fontSize: 12, color: c.muted, height: 1.4),
                         ),
                       ),
@@ -384,7 +385,7 @@ class MeScreen extends StatelessWidget {
                       value: WidgetSettingsScreen.contentLabel(store.widgetContent),
                       onTap: () => _push(context, const WidgetSettingsScreen()),
                     ),
-                    _Row(icon: Icons.auto_awesome_outlined, title: tr('Smart typing guide'), value: tr('Roman Urdu'), onTap: () => _push(context, const HelpScreen())),
+                    _Row(icon: Icons.auto_awesome_outlined, title: tr('Smart typing guide'), value: 'اردو · Roman Urdu · English', onTap: () => _push(context, const HelpScreen())),
                   ],
                 ),
               ),
@@ -401,6 +402,16 @@ class MeScreen extends StatelessWidget {
                       onTap: () async {
                         final ok = await Backup.export();
                         if (!ok && context.mounted) toast(context, tr('Could not create the backup.'));
+                      },
+                    ),
+                    _Row(
+                      icon: Icons.picture_as_pdf_outlined,
+                      title: tr('Save as PDF'),
+                      value: tr('Drive, WhatsApp, print'),
+                      onTap: () async {
+                        toast(context, tr('Making your PDF…'));
+                        final ok = await PdfReport.share();
+                        if (!ok && context.mounted) toast(context, tr('Could not create the PDF.'));
                       },
                     ),
                     _Row(

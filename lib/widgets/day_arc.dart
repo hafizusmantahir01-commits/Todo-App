@@ -41,6 +41,8 @@ class DayArc extends StatelessWidget {
                 fill: c.peach,
                 text: c.peachText,
                 future: c.onPeach.withValues(alpha: 0.6),
+                // In Urdu the day runs right to left, like the text.
+                mirror: Directionality.of(context) == TextDirection.rtl,
               ),
             ),
           ),
@@ -60,7 +62,10 @@ class _ArcPainter extends CustomPainter {
     required this.fill,
     required this.text,
     required this.future,
+    this.mirror = false,
   });
+
+  final bool mirror;
 
   final List<ArcMarker> markers;
   final double sun;
@@ -74,7 +79,7 @@ class _ArcPainter extends CustomPainter {
 
     Offset at(double f) {
       final th = math.pi - f * math.pi;
-      return Offset(cx + r * math.cos(th), baseY - r * math.sin(th));
+      return Offset(cx + (mirror ? -1 : 1) * r * math.cos(th), baseY - r * math.sin(th));
     }
 
     final rect = Rect.fromCircle(center: Offset(cx, baseY), radius: r);
@@ -98,7 +103,11 @@ class _ArcPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4
         ..strokeCap = StrokeCap.round;
-      canvas.drawArc(rect, math.pi, sun * math.pi, false, p);
+      if (mirror) {
+        canvas.drawArc(rect, 0, -sun * math.pi, false, p);
+      } else {
+        canvas.drawArc(rect, math.pi, sun * math.pi, false, p);
+      }
     }
 
     // Markers and labels.
@@ -142,5 +151,5 @@ class _ArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ArcPainter old) =>
-      old.sun != sun || old.markers != markers || old.track != track || old.text != text;
+      old.sun != sun || old.markers != markers || old.track != track || old.text != text || old.mirror != mirror;
 }
